@@ -24,7 +24,7 @@
     }, 20);
   });
 
-  window.document.addEventListener('DOMContentLoaded', function() {
+  function DOMContentLoadedListener() {
     // mark all values that are present when the DOM is ready.
     // We don't need to trigger a change event here,
     // as js libs start with those values already being set!
@@ -35,7 +35,14 @@
     window.setTimeout(function() {
       $rootElement.find('input').checkAndTriggerAutoFillEvent();
     }, 200);
-  }, false);
+  }
+
+  // IE8 compatibility issue
+  if(!window.document.addEventListener){
+    window.document.attachEvent('DOMContentLoaded', DOMContentLoadedListener);    
+  }else{
+    window.document.addEventListener('DOMContentLoaded', DOMContentLoadedListener, false);
+  }
 
   return;
 
@@ -89,15 +96,12 @@
   }
 
   function addGlobalEventListener(eventName, listener) {
-    // Given the possibility of a polyfill for IE8 like https://gist.github.com/jonathantneal/3748027
-    // that does not support `createEvent`, in order to make this library compatible with IE8
-    // we need to check the availability of `createEvent` and not `addEventListener`
-    if (!window.document.createEvent) {
-      rootElement.attachEvent(eventName, onEvent);
-    } else {
-      // Use a capturing event listener so that
-      // we also get the event when it's stopped!
-      // Also, the blur event does not bubble.
+    // Use a capturing event listener so that
+    // we also get the event when it's stopped!
+    // Also, the blur event does not bubble.
+    if(!rootElement.addEventListener){
+      rootElement.attachEvent(eventName, onEvent);      
+    }else{
       rootElement.addEventListener(eventName, onEvent, true);
     }
 
@@ -128,12 +132,12 @@
   }
 
   function triggerChangeEvent(element) {
-    if(!window.document.createEvent){
-      rootElement.change++;
-    } else {
-      var event = window.document.createEvent('HTMLEvents');
-      event.initEvent('change', true, true);
-      element.dispatchEvent(event);
-    }
+    var doc = window.document;
+    var event = doc.createEvent("HTMLEvents");
+    event.initEvent("change", true, true);
+    element.dispatchEvent(event);
   }
+
+
+
 })(window);
